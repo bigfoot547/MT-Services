@@ -40,7 +40,7 @@ function nametag_mainloop()
 		return
 	end
 	dbg("Restarting loop again")
-	minetest.after(5, mainloop)
+	minetest.after(5, nametag_mainloop)
 end
 
 function notify_noobs()
