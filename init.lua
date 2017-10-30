@@ -1,5 +1,7 @@
 local nt_loop_running = minetest.settings:get_bool("nametag_loop")
 local noob_loop_running = minetest.settings:get_bool("noob_loop")
+local tp_noob_loop_running = minetest.settings:get_bool("tp_noob_loop")
+
 local pos1, pos2 = {x = 4945, y = 4, z = -5005}, {x = 4935, y = -7, z = -4994}
 
 function dbg(str)
@@ -110,6 +112,33 @@ function noob_loop()
 	dbg("60 seconds elapsed, restarting noob timer.")
 	minetest.after(60, noob_loop)
 end
+local counter = 0
+function tp_noob_loop()
+	local p
+	for _,p in pairs(minetest.get_connected_players()) do
+		local pname = p:get_player_name()
+		local ppos = p:getpos()
+		local is_noob = minetest.get_player_privs(pname).interact ~= true
+
+		if is_noob and (ppos.x < -2468 or ppos.x > -2460 or ppos.z < -374 or ppos.z > -366) then
+			p:setpos({x = -2464, y = 27.5, z = -370})
+			minetest.chat_send_player(pname, minetest.colorize("#ffff00", "You must have read the rules and gained interact to exit spawn"))
+			dbg("Player "..pname.." attempted to exit spawn without interact")
+		end
+	end
+
+	if counter == 20 then
+		dbg("TP noob loop on 20th run")
+		counter = 0
+	end
+
+	if tp_noob_loop_running then
+		minetest.after(0, tp_noob_loop)
+	else
+		minetest.chat_send_all("TP Noob Loop aborted")
+		dbg("TP Noob Loop aborted")
+	end
+end
 
 minetest.register_chatcommand("start", {
 	params = "<service>",
@@ -131,6 +160,14 @@ minetest.register_chatcommand("start", {
 		
 			nt_loop_running = true
 			nametag_mainloop()
+			return true, "Service [" .. param .. "] started."
+		elseif param == "tp_noob" then
+			if tp_noob_loop_running then
+				return false, "Service [" .. param .. "] is already running."
+			end
+		
+			tp_noob_loop_running = true
+			tp_noob_loop()
 			return true, "Service [" .. param .. "] started."
 		else
 			return false, "Service not found."
@@ -157,6 +194,13 @@ minetest.register_chatcommand("stop", {
 		
 			nt_loop_running = false
 			return true, "Service [" .. param .. "] stopped."
+		elseif param == "tp_noob" then
+			if not tp_noob_loop_running then
+				return false, "Service [" .. param .. "] isn't running."
+			end
+		
+			tp_noob_loop_running = false
+			return true, "Service [" .. param .. "] stopped."
 		else
 			return false, "Service not found."
 		end
@@ -177,4 +221,11 @@ if nt_loop_running then
 	nametag_mainloop()
 else
 	print("[Services] Nametag loop disabled, not starting")
+end
+
+if tp_noob_loop_running then
+	print("[Services] TP Noob loop service started as [tp_noob]")
+	tp_noob_loop()
+else
+	print("[Services] TP Noob loop service disables, not starting")
 end
