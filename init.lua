@@ -138,6 +138,7 @@ function tp_noob_loop()
 		minetest.chat_send_all("TP Noob Loop aborted")
 		dbg("TP Noob Loop aborted")
 	end
+	counter += 1
 end
 
 minetest.register_chatcommand("start", {
